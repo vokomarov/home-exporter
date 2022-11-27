@@ -1,0 +1,12 @@
+telegramBotToken: {token}
+homes:
+  - name: {name}
+    telegramChatId: {chat-id}
+    internetStatus:
+      enabled: true
+      host: 127.0.0.1
+      port: 21
+      method: tcp
+      retries: 0
+      timeout: 5
+      interval: 6
