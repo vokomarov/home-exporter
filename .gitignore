@@ -12,6 +12,7 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
- vendor/
-
-config.yml
+vendor/
+/config.yml
+deploy/config.yml
+deploy/secret.yml

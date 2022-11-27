@@ -8,7 +8,7 @@ import (
 )
 
 const DefaultConfigPathEnvName = "CONFIG_PATH"
-const TelegramBotTokenEnvName = "TG_BOT_TOKEN"
+const TelegramBotTokenEnvName = "TELEGRAM_BOT_TOKEN"
 const DefaultConfigPath = "config.yml"
 
 var Global Config

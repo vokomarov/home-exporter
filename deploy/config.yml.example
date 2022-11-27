@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: home-exporter-config
+  namespace: telegram-bots
+data:
+  config.yml: |
+    homes:
+      - name: Name
+        telegramChatId: 123456789
+        internetStatus:
+          enabled: true
+          host: 127.0.0.1
+          port: 21
+          method: tcp
+          retries: 0
+          timeout: 5
+          interval: 6

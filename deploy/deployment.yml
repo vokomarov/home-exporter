@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: home-exporter
+  namespace: telegram-bots
+spec:
+  selector:
+    matchLabels:
+      app: home-exporter
+  replicas: 1
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 3
+  template:
+    metadata:
+      name: home-exporter
+      namespace: telegram-bots
+      labels:
+        app: home-exporter
+    spec:
+      automountServiceAccountToken: false
+      volumes:
+        - name: home-exporter-config
+          configMap:
+            name: home-exporter-config
+      containers:
+        - name: home-exporter
+          image: vovanms/home_exporter:0.0.3
+          volumeMounts:
+            - mountPath: /app/config
+              name: home-exporter-config
+          envFrom:
+            - secretRef:
+                name: home-exporter-secret
+          env:
+            - name: CONFIG_PATH
+              value: /app/config/config.yml
+          livenessProbe:
+            tcpSocket:
+              port: 2112
+          readinessProbe:
+            tcpSocket:
+              port: 2112
+

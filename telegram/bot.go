@@ -23,7 +23,7 @@ func Listen() error {
 
 	log.Printf("Telegram Bot: authorized on account %s", bot.Self.UserName)
 
-	bot.Debug = true
+	bot.Debug = false
 
 	if enableWebhook {
 		if err := setWebhook(""); err != nil {
