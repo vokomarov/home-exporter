@@ -4,7 +4,7 @@ CONTAINER_NAME=home-exporter
 CONTAINER_PORT_HTTP=80
 CONTAINER_PORT_PROM=2112
 NETWORK_NAME=home-exporter-local
-RELEASE_VERSION=0.0.3
+RELEASE_VERSION=0.0.4
 
 REPO=vovanms/home_exporter
 IMAGE_RELEASE=$(REPO):$(RELEASE_VERSION)
@@ -33,6 +33,7 @@ deploy:
 start:
 	docker run \
       --rm \
+      --privileged \
       --name $(CONTAINER_NAME) \
       -p $(CONTAINER_PORT_HTTP):80 \
       -p $(CONTAINER_PORT_PROM):2112 \

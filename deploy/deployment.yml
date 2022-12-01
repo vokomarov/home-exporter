@@ -25,7 +25,9 @@ spec:
             name: home-exporter-config
       containers:
         - name: home-exporter
-          image: vovanms/home_exporter:0.0.3
+          image: vovanms/home_exporter:0.0.4
+          securityContext:
+            privileged: true
           volumeMounts:
             - mountPath: /app/config
               name: home-exporter-config

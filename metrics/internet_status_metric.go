@@ -125,19 +125,14 @@ func (m *InternetStatusMetric) log(format string, a ...any) {
 }
 
 func (m *InternetStatusMetric) ping() InternetStatus {
-	address := net.JoinHostPort(m.host, m.port)
-
-	conn, err := net.DialTimeout(m.method, address, m.timeout)
-	if conn != nil {
-		defer func(conn net.Conn) {
-			err := conn.Close()
-			if err != nil {
-				m.log("Unable to close network connection: %v", err)
-			}
-		}(conn)
+	switch m.method {
+	case "tcp":
+		return NewInternetStatus(m.pingTcp(m.host, m.port, m.timeout))
+	case "icmp":
+		return NewInternetStatus(m.pingIcmp(m.host, m.timeout))
+	default:
+		return NewInternetStatus(false, fmt.Errorf("unsupported method"))
 	}
-
-	return NewInternetStatus(conn != nil && err == nil, err)
 }
 
 func (m *InternetStatusMetric) telegramMessage(actualStatus InternetStatus) error {
@@ -158,4 +153,25 @@ func (m *InternetStatusMetric) telegramMessage(actualStatus InternetStatus) erro
 	}
 
 	return nil
+}
+
+func (m *InternetStatusMetric) pingTcp(host, port string, timeout time.Duration) (bool, error) {
+	address := net.JoinHostPort(host, port)
+
+	conn, err := net.DialTimeout("tcp", address, timeout)
+	if conn != nil {
+		defer func(conn net.Conn) {
+			err := conn.Close()
+			if err != nil {
+				m.log("Unable to close network connection: %v", err)
+			}
+		}(conn)
+	}
+
+	return conn != nil && err == nil, err
+}
+
+func (m *InternetStatusMetric) pingIcmp(host string, timeout time.Duration) (bool, error) {
+	_, _, err := ICMPPing(host, timeout)
+	return err == nil, err
 }
