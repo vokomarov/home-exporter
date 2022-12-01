@@ -11,15 +11,17 @@ import (
 )
 
 func main() {
-	if err := config.Load(); err != nil {
+	var err error
+
+	if err = config.Load(); err != nil {
+		panic(err)
+	}
+
+	if telegram.Bot, err = telegram.NewBot(); err != nil {
 		panic(err)
 	}
 
 	metrics.Listen()
-
-	if err := telegram.Listen(); err != nil {
-		panic(err)
-	}
 
 	http.Handle("/metrics", promhttp.Handler())
 	if err := http.ListenAndServe(":2112", nil); err != nil {

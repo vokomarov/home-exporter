@@ -153,7 +153,7 @@ func (m *InternetStatusMetric) telegramMessage(actualStatus InternetStatus) erro
 		message = fmt.Sprintf(MessageDown, m.name)
 	}
 
-	if err := telegram.Send(message, m.tgChatId); err != nil {
+	if err := telegram.Bot.Send(message, m.tgChatId); err != nil {
 		return fmt.Errorf("sending status change telegram message: %w", err)
 	}
 

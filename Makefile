@@ -11,7 +11,10 @@ IMAGE_RELEASE=$(REPO):$(RELEASE_VERSION)
 IMAGE_DEV=$(REPO):dev
 IMAGE_LATEST=$(REPO):latest
 
-.PHONY: build tag push start stop deploy
+.PHONY: run build tag push start stop deploy
+
+run:
+	go run main.go
 
 build:
 	docker build . -t $(IMAGE_DEV)

@@ -4,42 +4,60 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	"github.com/vokomarov/home-exporter/config"
 )
 
-var bot *tgbotapi.BotAPI
-var enableWebhook = false
+var Bot *BotService
 
-func Listen() error {
+type BotService struct {
+	mu            sync.Mutex
+	client        *tgbotapi.BotAPI
+	enableWebhook bool
+}
+
+func NewBot() (*BotService, error) {
 	var err error
 
-	bot, err = tgbotapi.NewBotAPI(config.Global.TelegramBotToken)
+	b := BotService{}
+
+	b.client, err = tgbotapi.NewBotAPI(config.Global.TelegramBotToken)
 	if err != nil {
-		return fmt.Errorf("creating telegram bot instance: %w", err)
+		return nil, fmt.Errorf("creating telegram bot instance: %w", err)
 	}
 
-	log.Printf("Telegram Bot: authorized on account %s", bot.Self.UserName)
+	b.client.Debug = false
+	b.enableWebhook = false
 
-	bot.Debug = false
+	log.Printf("Telegram Bot: authorized on account %s", b.client.Self.UserName)
 
-	if enableWebhook {
-		if err := setWebhook(""); err != nil {
-			return fmt.Errorf("set webhook: %w", err)
-		}
+	return &b, nil
+}
 
-		webhookListen(func(update tgbotapi.Update) {
-			log.Printf("%+v\n", update)
-		})
+func (bot *BotService) Listen() error {
+	if !bot.enableWebhook {
+		return nil
 	}
+
+	if err := bot.setWebhook(""); err != nil {
+		return fmt.Errorf("set webhook: %w", err)
+	}
+
+	bot.webhookListen(func(update tgbotapi.Update) {
+		log.Printf("%+v\n", update)
+	})
 
 	return nil
 }
 
-func Send(message string, chatId int64) error {
-	if _, err := bot.Send(tgbotapi.MessageConfig{
+func (bot *BotService) Send(message string, chatId int64) error {
+	bot.mu.Lock()
+	defer bot.mu.Unlock()
+
+	if _, err := bot.client.Send(tgbotapi.MessageConfig{
 		BaseChat: tgbotapi.BaseChat{
 			ChatID: chatId,
 		},
@@ -52,8 +70,9 @@ func Send(message string, chatId int64) error {
 	return nil
 }
 
-func webhookListen(handler func(update tgbotapi.Update)) {
-	updates := bot.ListenForWebhook("/" + bot.Token)
+func (bot *BotService) webhookListen(handler func(update tgbotapi.Update)) {
+	updates := bot.client.ListenForWebhook("/" + bot.client.Token)
+
 	go http.ListenAndServe("0.0.0.0:80", nil)
 
 	for update := range updates {
@@ -61,19 +80,19 @@ func webhookListen(handler func(update tgbotapi.Update)) {
 	}
 }
 
-func setWebhook(url string) error {
-	wh, err := tgbotapi.NewWebhook(fmt.Sprintf("%s/%s", url, bot.Token))
+func (bot *BotService) setWebhook(url string) error {
+	wh, err := tgbotapi.NewWebhook(fmt.Sprintf("%s/%s", url, bot.client.Token))
 	if err != nil {
 		return fmt.Errorf("creating webhook instance: %w", err)
 	}
 
-	if _, err := bot.Request(wh); err != nil {
+	if _, err := bot.client.Request(wh); err != nil {
 		return fmt.Errorf("making API request to set webhook")
 	}
 
 	var info tgbotapi.WebhookInfo
 
-	if info, err = bot.GetWebhookInfo(); err != nil {
+	if info, err = bot.client.GetWebhookInfo(); err != nil {
 		return fmt.Errorf("reading webhook info: %w", err)
 	}
 
